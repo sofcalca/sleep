@@ -50,12 +50,17 @@ def build_cnn(input_var=None):
 # Load the dataset
 from sklearn.cross_validation import train_test_split
 X_temp, X_test, y_temp, y_test = train_test_split(data, labels["TARGET"], test_size=0.10, random_state=42)
-X_train, y_train, X_val, y_val = train_test_split(X_temp, y_temp, test_size=0.10, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.10, random_state=42)
 # Prepare Theano variables for inputs and targets
 input_var = T.tensor4('inputs')
 target_var = T.ivector('targets')
 # Create neural network model
 network = build_cnn(input_var)
+
+
+# In[ ]:
+
+X_train.shape, y_train.
 
 
 # In[10]:
@@ -93,7 +98,7 @@ from tempfile import mkstemp
 
 # In[19]:
 
-tempfile.mkstemp(dir="../tmp")
+mkstemp(dir="../tmp")
 
 
 # In[25]:
@@ -148,4 +153,9 @@ for epoch in range(num_epochs):
 
 predicted_values = test_prediction.flatten()
 print "test loss:", test_loss
+
+
+# In[ ]:
+
+
 
