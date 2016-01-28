@@ -45,11 +45,12 @@ def build_cnn(input_var=None):
     return network
 
 
-# In[9]:
+# In[34]:
 
 # Load the dataset
 from sklearn.cross_validation import train_test_split
-X_train, y_train, X_test, y_test = train_test_split(data, labels, test_size=0.25, random_state=42)
+X_temp, X_test, y_temp, y_test = train_test_split(data, labels["TARGET"], test_size=0.10, random_state=42)
+X_train, y_train, X_val, y_val = train_test_split(X_temp, y_temp, test_size=0.10, random_state=42)
 # Prepare Theano variables for inputs and targets
 input_var = T.tensor4('inputs')
 target_var = T.ivector('targets')
@@ -85,12 +86,66 @@ test_acc = T.mean(T.eq(T.argmax(test_prediction, axis=1), target_var),
                   dtype=theano.config.floatX)
 
 
+# In[18]:
+
+from tempfile import mkstemp
+
+
+# In[19]:
+
+tempfile.mkstemp(dir="../tmp")
+
+
+# In[25]:
+
+import os
+os.environ["THEANO_FLAGS"] = "blas.ldflags=-llapack -lblas -lgfortran"
+
+
+# In[26]:
+
+train_fn =theano.function([input_var, target_var], loss, updates=updates)
+
+
 # In[ ]:
 
-train_fn = theano.function([input_var, target_var], loss, updates=updates)
+val_fn = theano.function([input_var, target_var], [test_loss, test_acc])
 
 
 # In[ ]:
 
+for epoch in range(num_epochs):
+    # In each epoch, we do a full pass over the training data:
+    train_err = 0
+    train_batches = 0
+    start_time = time.time()
+    for batch in iterate_minibatches(X_train, y_train, 500, shuffle=True):
+        inputs, targets = batch
+        train_err += train_fn(inputs, targets)
+        train_batches += 1
 
+    # And a full pass over the validation data:
+    val_err = 0
+    val_acc = 0
+    val_batches = 0
+    for batch in iterate_minibatches(X_val, y_val, 500, shuffle=False):
+        inputs, targets = batch
+        err, acc = val_fn(inputs, targets)
+        val_err += err
+        val_acc += acc
+        val_batches += 1
+
+    # Then we print the results for this epoch:
+    print("Epoch {} of {} took {:.3f}s".format(
+        epoch + 1, num_epochs, time.time() - start_time))
+    print("  training loss:\t\t{:.6f}".format(train_err / train_batches))
+    print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
+    print("  validation accuracy:\t\t{:.2f} %".format(
+        val_acc / val_batches * 100))
+
+
+# In[ ]:
+
+predicted_values = test_prediction.flatten()
+print "test loss:", test_loss
 
