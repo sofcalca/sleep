@@ -11,14 +11,14 @@ import theano.tensor as T
 import lasagne
 
 
-# In[7]:
+# In[9]:
 
 path="data/"
-data=pd.read_csv(path+"input_train.csv")
-labels=pd.read_csv(path+"challenge_output_data_training_file_sleep_stages_classification.csv", sep=";")
+data=pd.read_csv(path+"input_train.csv", index_col="ID")
+labels=pd.read_csv(path+"challenge_output_data_training_file_sleep_stages_classification.csv", sep=";", index_col="ID")
 
 
-# In[8]:
+# In[5]:
 
 def build_cnn(input_var=None):
     network = lasagne.layers.InputLayer(shape=(None, 1, 3750, 1),
@@ -45,22 +45,23 @@ def build_cnn(input_var=None):
     return network
 
 
-# In[34]:
+# In[15]:
+
+X=data.filter(regex="EEG.*")
+y=labels
+
+
+# In[18]:
 
 # Load the dataset
 from sklearn.cross_validation import train_test_split
-X_temp, X_test, y_temp, y_test = train_test_split(data, labels["TARGET"], test_size=0.10, random_state=42)
+X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.10, random_state=42)
 X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.10, random_state=42)
 # Prepare Theano variables for inputs and targets
 input_var = T.tensor4('inputs')
 target_var = T.ivector('targets')
 # Create neural network model
 network = build_cnn(input_var)
-
-
-# In[ ]:
-
-X_train.shape, y_train.
 
 
 # In[10]:
