@@ -93,7 +93,7 @@ from tempfile import mkstemp
 
 # In[19]:
 
-tempfile.mkstemp(dir="../tmp")
+mkstemp(dir="../tmp")
 
 
 # In[25]:
@@ -112,8 +112,22 @@ train_fn =theano.function([input_var, target_var], loss, updates=updates)
 val_fn = theano.function([input_var, target_var], [test_loss, test_acc])
 
 
-# In[ ]:
+def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
+    assert len(inputs) == len(targets)
+    if shuffle:
+        indices = np.arange(len(inputs))
+        np.random.shuffle(indices)
+    for start_idx in range(0, len(inputs) - batchsize + 1, batchsize):
+        if shuffle:
+            excerpt = indices[start_idx:start_idx + batchsize]
+        else:
+            excerpt = slice(start_idx, start_idx + batchsize)
+        yield inputs[excerpt], targets[excerpt]
 
+
+# In[ ]:
+import time
+num_epochs=40
 for epoch in range(num_epochs):
     # In each epoch, we do a full pass over the training data:
     train_err = 0
