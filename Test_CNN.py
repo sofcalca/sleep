@@ -11,14 +11,14 @@ import theano.tensor as T
 import lasagne
 
 
-# In[7]:
+# In[9]:
 
 path="data/"
-data=pd.read_csv(path+"input_train.csv")
-labels=pd.read_csv(path+"challenge_output_data_training_file_sleep_stages_classification.csv", sep=";")
+data=pd.read_csv(path+"input_train.csv", index_col="ID")
+labels=pd.read_csv(path+"challenge_output_data_training_file_sleep_stages_classification.csv", sep=";", index_col="ID")
 
 
-# In[8]:
+# In[5]:
 
 def build_cnn(input_var=None):
     network = lasagne.layers.InputLayer(shape=(None, 1, 3750, 1),
@@ -45,12 +45,18 @@ def build_cnn(input_var=None):
     return network
 
 
-# In[34]:
+# In[15]:
+
+X=data.filter(regex="EEG.*")
+y=labels
+
+
+# In[18]:
 
 # Load the dataset
 from sklearn.cross_validation import train_test_split
-X_temp, X_test, y_temp, y_test = train_test_split(data, labels["TARGET"], test_size=0.10, random_state=42)
-X_train, y_train, X_val, y_val = train_test_split(X_temp, y_temp, test_size=0.10, random_state=42)
+X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.10, random_state=42)
+X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.10, random_state=42)
 # Prepare Theano variables for inputs and targets
 input_var = T.tensor4('inputs')
 target_var = T.ivector('targets')
@@ -93,7 +99,7 @@ from tempfile import mkstemp
 
 # In[19]:
 
-tempfile.mkstemp(dir="../tmp")
+mkstemp(dir="../tmp")
 
 
 # In[25]:
@@ -112,8 +118,22 @@ train_fn =theano.function([input_var, target_var], loss, updates=updates)
 val_fn = theano.function([input_var, target_var], [test_loss, test_acc])
 
 
-# In[ ]:
+def iterate_minibatches(inputs, targets, batchsize, shuffle=False):
+    assert len(inputs) == len(targets)
+    if shuffle:
+        indices = np.arange(len(inputs))
+        np.random.shuffle(indices)
+    for start_idx in range(0, len(inputs) - batchsize + 1, batchsize):
+        if shuffle:
+            excerpt = indices[start_idx:start_idx + batchsize]
+        else:
+            excerpt = slice(start_idx, start_idx + batchsize)
+        yield inputs[excerpt], targets[excerpt]
 
+
+# In[ ]:
+import time
+num_epochs=40
 for epoch in range(num_epochs):
     # In each epoch, we do a full pass over the training data:
     train_err = 0
@@ -148,4 +168,9 @@ for epoch in range(num_epochs):
 
 predicted_values = test_prediction.flatten()
 print "test loss:", test_loss
+
+
+# In[ ]:
+
+
 
